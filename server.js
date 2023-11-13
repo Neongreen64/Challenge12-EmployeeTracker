@@ -6,7 +6,7 @@ const inquirer = require('inquirer');
 const db = mysql2.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Grantislit420!',
+    password: 'password',
     database: 'employee_tracker_db',
 });
 
