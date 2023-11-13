@@ -71,17 +71,92 @@ const main = () => {
             name: 'options',
             message: 'What would you like to do?',
             choices: [
-                'View departments',
+                'view departments',
                 'view employees',
                 'view roles',
                 'add department',
                 'add employee',
                 'add role',
                 'update role',
-                'Exit'
+                'exit'
             ]
         }
-    ]) 
-}
+    ])
+    .then((answers) => {
+        //switch statement to call a function based on the user's input.
+        switch(answers.choices){
+            case 'view departments':
+                viewDepartments();
+                break;
+            case 'view employees':
+                viewEmployees();
+                break;
+            case 'view roles':
+                viewRoles();
+                break;
+            
+            //prompts the user for the name of the department then adds to database
+            case 'add department':
+                inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'name',
+                        message: 'Enter the name of the deparment: '
+                    }
+                ])
+                .then((answers) => {
+                    addDepartment(answers.name);
+                });
+                break;
+            
+            //prompts the user for the name of the employee then adds to database
+            case 'add employee':
+                inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'name',
+                        message: 'Enter the name of the employee: '
+                    }
+                ])
+                .then((answers) => {
+                    addEmployee(answers.name);
+                });
+                break;
+            
+            //prompts the user for the name of the role then adds to database
+            case 'add role':
+                inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'name',
+                        message: 'Enter the name of the role: '
+                    }
+                ])
+                .then((answers)=>{
+                    addRole(answers.name);
+                });
+                break;
+            
+            //prompts the user for the id of the employee and the new role id and then updates the database
+            case 'update role':
+                inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'employeeID',
+                        message: 'Enter the employee id: ',
+                    },
+                    {
+                        type: 'input',
+                        name: 'newID',
+                        message: 'Enter the new role id: ',
+                    },
+                ])
+                .then((answers) => {
+                    updateRole(parseInt(answers.employeeID), parseInt(answers.newID));
+                });
+                break;
+        };
+    }); 
+};
 
 main();
