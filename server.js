@@ -6,66 +6,123 @@ const inquirer = require('inquirer');
 const db = mysql2.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'passowrd',
+    password: 'Grantislit420!',
     database: 'employee_tracker_db',
-},
-console.log("connected to the employee_tracker_db database")
-);
+});
+
+db.connect((e)=> {
+    if (e) {
+        console.error("error connecting to employee_tracker_db");
+        return;
+    }
+    console.log("connected to employee_tracker_db!")
+    main();
+})
 
 //function to add a department
 const addDepartment = (name) => {
-    return db.query(
+    db.query(
         'INSERT INTO department (name) VALUES (?)', 
-        [name]
-        )
-    .then(() => 'Department added successfully.')
-    .catch((e) => {
-        throw e;
-    });
-;}
+        [name], function(e, addDept){
+            if(e){
+                console.error("error adding department. ", e);
+            }
+            else{
+                console.log("Successfully added department!");
+                main();
+            }
+        }
+    );   
+};
 
 //function to view all of the departments
-const viewDepartments = () => {
-    return db.query('SELECT * FROM department');
+const viewDepartments = async () => {
+    db.query('SELECT * FROM department', function(e, deptData){
+        if(e){
+            console.error("Error viewing departments. ", e);
+            
+        }
+        else{
+            console.table(deptData);
+            main();
+        }
+    });
 };
 
 //function to add a role
 const addRole = (title, salary, departmentID) => {
-    return db.query(
+    db.query(
         'Insert INTO role (title, salary, department_id) VALUES (?,?,?)',
-        [title,salary,departmentID]
+        [title,salary,departmentID], function(e, addrl){
+            if(e){
+                console.error("error adding role. ", e);
+            }
+            else{
+                console.log("Successfully added role!");
+                main();
+            }
+        }
     );
 };
 
 //function to view roles
 const viewRoles = () => {
-    return db.query('SELECT * FROM role');
+    db.query('SELECT * FROM role', function(e, roleData){
+        if(e){
+            console.error("Error viewing roles. ", e);
+            
+        }
+        else{
+            console.table(roleData);
+            main();
+        }
+    });
 };
 
 //function to add an employee
 const addEmployee = (firstName, lastName, roleID) => {
-    return db.query(
+    db.query(
         'INSERT INTO employee (first_name, last_name, role_id) VALUES (?,?,?)',
-        [firstName,lastName, roleID]
+        [firstName,lastName,roleID], function(e, addData){
+            if(e){
+                console.error("error adding employee. ", e);
+            }
+            else{
+                console.log("Successfully added employee!");
+                main();
+            }
+        }
     );
-}
+};
 
 //function to view employees
 const viewEmployees = () => {
-    return db.query('SELECT * FROM employee');
-}
+    db.query('SELECT * FROM employee', function(e, employeeData){
+        if(e){
+            console.error("Error viewing employees. ", e);
+            
+        }
+        else{
+            console.table(employeeData);
+            main();
+        }
+    });
+};
 
 //function to update an employees role
 const updateRole = (employeeID, newID) => {
     return db.query(
         'UPDATE employee SET role_id = ? WHERE id = ?',
         [newID, employeeID]
-    );
-}
+    ).then(()=>"Role successfully updated")
+    .catch((e)=>{
+        throw e;
+    });
+};
 
 //main function that will run the inquirer prompts
-const main = () => {
-    inquirer.prompt([
+const main = async () => {
+    const answers = await inquirer.prompt([
         {
             type: 'list',
             name: 'options',
@@ -81,65 +138,80 @@ const main = () => {
                 'exit'
             ]
         }
-    ])
-    .then((answers) => {
-        //switch statement to call a function based on the user's input.
-        switch(answers.choices){
+    ]);
+        switch(answers.options){
             case 'view departments':
                 viewDepartments();
                 break;
+            
             case 'view employees':
                 viewEmployees();
                 break;
+            
             case 'view roles':
                 viewRoles();
                 break;
             
             //prompts the user for the name of the department then adds to database
             case 'add department':
-                inquirer.prompt([
+                const deptName = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'name',
                         message: 'Enter the name of the deparment: '
                     }
-                ])
-                .then((answers) => {
-                    addDepartment(answers.name);
-                });
+                ]);
+                addDepartment(deptName.name);
                 break;
             
             //prompts the user for the name of the employee then adds to database
             case 'add employee':
-                inquirer.prompt([
+                const employeeName = await inquirer.prompt([
                     {
                         type: 'input',
-                        name: 'name',
-                        message: 'Enter the name of the employee: '
-                    }
-                ])
-                .then((answers) => {
-                    addEmployee(answers.name);
-                });
+                        name: 'firstname',
+                        message: 'Enter the first name of the employee: '
+                    },
+                    {
+                        type: 'input',
+                        name: 'lastname',
+                        message: 'Enter the last name of the employee: '
+                    },
+                    {
+                        type: 'input',
+                        name: 'role',
+                        message: 'Enter the role id of the employee: '
+                    },
+                    
+                ]);
+                addEmployee(employeeName.firstname, employeeName.lastname, employeeName.role);
                 break;
             
             //prompts the user for the name of the role then adds to database
             case 'add role':
-                inquirer.prompt([
+                const roleName = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'name',
                         message: 'Enter the name of the role: '
+                    },
+                    {
+                        type: 'input',
+                        name: 'salary',
+                        message: 'Enter the salary of the role: '
+                    },
+                    {
+                        type: 'input',
+                        name: 'roleID',
+                        message: 'Enter the id of the role: '
                     }
-                ])
-                .then((answers)=>{
-                    addRole(answers.name);
-                });
+                ]);
+                addRole(roleName.name, roleName.salary, roleName.roleID);
                 break;
             
             //prompts the user for the id of the employee and the new role id and then updates the database
             case 'update role':
-                inquirer.prompt([
+                const updateInfo = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'employeeID',
@@ -150,13 +222,15 @@ const main = () => {
                         name: 'newID',
                         message: 'Enter the new role id: ',
                     },
-                ])
-                .then((answers) => {
-                    updateRole(parseInt(answers.employeeID), parseInt(answers.newID));
-                });
+                ]);
+                updateRole(parseInt(updateInfo.employeeID), parseInt(updateInfo.newID));
+                break;
+            default:
+                console.log('ytho');
                 break;
         };
-    }); 
-};
+        console.log("BRUH");
+    
+    };
 
-main();
+
