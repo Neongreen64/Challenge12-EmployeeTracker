@@ -2,14 +2,15 @@
 const mysql2 = require('mysql2');
 const inquirer = require('inquirer');
 
-//create the connection to the mysql database
+//create the db to the mysql database
 const db = mysql2.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'password',
+    password: 'passowrd',
     database: 'employee_tracker_db',
 });
 
+//connect to the employee_tracker_db
 db.connect((e)=> {
     if (e) {
         console.error("error connecting to employee_tracker_db");
@@ -97,7 +98,7 @@ const addEmployee = (firstName, lastName, roleID) => {
 
 //function to view employees
 const viewEmployees = () => {
-    db.query('SELECT * FROM employee', function(e, employeeData){
+    db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title AS job_title, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id', function(e, employeeData){
         if(e){
             console.error("Error viewing employees. ", e);
             
@@ -111,17 +112,24 @@ const viewEmployees = () => {
 
 //function to update an employees role
 const updateRole = (employeeID, newID) => {
-    return db.query(
+    db.query(
         'UPDATE employee SET role_id = ? WHERE id = ?',
-        [newID, employeeID]
-    ).then(()=>"Role successfully updated")
-    .catch((e)=>{
-        throw e;
-    });
+        [newID, employeeID], function(e, employeeData){
+            if(e){
+                console.error("Error updating employee.");
+            }
+            else{
+                console.log("Successfully updated employee!")
+                main();
+            }
+   
+        });
 };
 
 //main function that will run the inquirer prompts
 const main = async () => {
+    
+    //prompts the user with the choices listed below in the form of a list
     const answers = await inquirer.prompt([
         {
             type: 'list',
@@ -139,98 +147,101 @@ const main = async () => {
             ]
         }
     ]);
-        switch(answers.options){
-            case 'view departments':
-                viewDepartments();
-                break;
+
+        //switch statement to run functions based off of the user's input
+    switch(answers.options){
+        case 'view departments':
+            viewDepartments();
+            break;
             
-            case 'view employees':
-                viewEmployees();
-                break;
+        case 'view employees':
+            viewEmployees();
+            break;
             
-            case 'view roles':
-                viewRoles();
-                break;
+        case 'view roles':
+            viewRoles();
+            break;
             
-            //prompts the user for the name of the department then adds to database
-            case 'add department':
-                const deptName = await inquirer.prompt([
-                    {
-                        type: 'input',
-                        name: 'name',
-                        message: 'Enter the name of the deparment: '
-                    }
-                ]);
-                addDepartment(deptName.name);
-                break;
+        //prompts the user for the name of the department then adds to database
+        case 'add department':
+            const deptName = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'name',
+                    message: 'Enter the name of the deparment: '
+                }
+            ]);
+            addDepartment(deptName.name);
+            break;
             
-            //prompts the user for the name of the employee then adds to database
-            case 'add employee':
-                const employeeName = await inquirer.prompt([
-                    {
-                        type: 'input',
-                        name: 'firstname',
-                        message: 'Enter the first name of the employee: '
-                    },
-                    {
-                        type: 'input',
-                        name: 'lastname',
-                        message: 'Enter the last name of the employee: '
-                    },
-                    {
-                        type: 'input',
-                        name: 'role',
-                        message: 'Enter the role id of the employee: '
-                    },
+        //prompts the user for the firstname, lastname, and role of the employee then adds to database
+        case 'add employee':
+            const employeeName = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'firstname',
+                    message: 'Enter the first name of the employee: '
+                },
+                {
+                    type: 'input',
+                    name: 'lastname',
+                    message: 'Enter the last name of the employee: '
+                },
+                {
+                    type: 'input',
+                    name: 'role',
+                    message: 'Enter the role id of the employee: '
+                },
                     
                 ]);
-                addEmployee(employeeName.firstname, employeeName.lastname, employeeName.role);
-                break;
+            addEmployee(employeeName.firstname, employeeName.lastname, employeeName.role);
+            break;
             
-            //prompts the user for the name of the role then adds to database
-            case 'add role':
-                const roleName = await inquirer.prompt([
-                    {
-                        type: 'input',
-                        name: 'name',
-                        message: 'Enter the name of the role: '
-                    },
-                    {
-                        type: 'input',
-                        name: 'salary',
-                        message: 'Enter the salary of the role: '
-                    },
-                    {
-                        type: 'input',
-                        name: 'roleID',
-                        message: 'Enter the id of the role: '
-                    }
+        //prompts the user for the name, salary, and roleID of the role then adds to database
+        case 'add role':
+            const roleName = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'name',
+                    message: 'Enter the name of the role: '
+                },
+                {
+                    type: 'input',
+                    name: 'salary',
+                    message: 'Enter the salary of the role: '
+                },
+                {
+                    type: 'input',
+                    name: 'roleID',
+                    message: 'Enter the id of the role: '
+                }
                 ]);
-                addRole(roleName.name, roleName.salary, roleName.roleID);
-                break;
+            addRole(roleName.name, roleName.salary, roleName.roleID);
+            break;
             
-            //prompts the user for the id of the employee and the new role id and then updates the database
-            case 'update role':
-                const updateInfo = await inquirer.prompt([
-                    {
-                        type: 'input',
-                        name: 'employeeID',
-                        message: 'Enter the employee id: ',
-                    },
-                    {
-                        type: 'input',
-                        name: 'newID',
-                        message: 'Enter the new role id: ',
-                    },
-                ]);
-                updateRole(parseInt(updateInfo.employeeID), parseInt(updateInfo.newID));
-                break;
-            default:
-                console.log('ytho');
-                break;
-        };
-        console.log("BRUH");
-    
+        //prompts the user for the id of the employee and the new role id and then updates the database
+        case 'update role':
+            const updateInfo = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'employeeID',
+                    message: 'Enter the employee id: ',
+                },
+                {
+                    type: 'input',
+                    name: 'newID',
+                    message: 'Enter the new role id: ',
+                },
+            ]);
+            updateRole(parseInt(updateInfo.employeeID), parseInt(updateInfo.newID));
+            break;
+        
+        //default case will end the connection
+        default:
+            db.end();
+            break;
     };
+    
+};
 
 
